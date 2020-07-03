@@ -92,6 +92,7 @@ app.post('/signup', (req, res) => {
     // Define an errors object
     let errors = {};
 
+    // Validation for sign up
     if(isEmpty(newUser.email)){
         errors.email = 'Must not be empty';
     } 
@@ -157,7 +158,51 @@ app.post('/signup', (req, res) => {
         });
 })
 
+/* Login route */
+app.post('/login', (req, res) => {
+    const user = {
+        email: req.body.email,
+        password: req.body.password
+    }
 
+    // Error object
+    let errors = {};
+
+    // Validation for login
+    if(isEmpty(user.email)){
+        errors.email = 'Must not be empty';
+    } 
+    else if(!isEmail(user.email)){
+        errors.email = 'Must be a valid email address';
+    }
+
+    if(isEmpty(user.password)){
+        errors.password = 'Must not be empty';
+    } 
+
+    // Checks the error object and sees if the length of its keys are > 0, if yes that means
+    // we have an error somewhere
+    if(Object.keys(errors).length > 0){
+        return res.status(400).json(errors);
+    }
+
+    // Log user in if we have no errors
+    firebase.auth()
+        .signInWithEmailAndPassword(user.email, user.password)
+        .then((data) => {
+            return data.user.getIdToken();
+        })
+        .then((token) => {
+            return res.json({ token });
+        })
+        .catch((err) => {
+            console.error(err);
+            if(err.code === 'auth/wrong-password'){
+                return res.status(403).json({ general: 'Wrong credentials, please try again' });
+            }
+            return res.status(500).json({ error: err.code });
+        })
+})
 
 // To expose our endpoint to be something like https://baseurl/api/function
 // app is the container for all our routes so we just expose that, this is done through express
