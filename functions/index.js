@@ -67,6 +67,19 @@ app.post('/scream', (req, res) => {
 
 });
 
+/* Checks if input is empty or not */
+const isEmpty = (string) => {
+    if(string.trim() === '') return true;
+    else return false;
+}
+
+/* Checks if Email is Valid or Not */
+const isEmail = (email) => {
+    const regEx = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    if(email.match(regEx)) return true;
+    else return false;
+}
+
 /* Sign up route */
 app.post('/signup', (req, res) => {
     const newUser = {
@@ -75,6 +88,34 @@ app.post('/signup', (req, res) => {
         confirmPassword: req.body.confirmPassword,
         handle: req.body.handle,
     };
+
+    // Define an errors object
+    let errors = {};
+
+    if(isEmpty(newUser.email)){
+        errors.email = 'Must not be empty';
+    } 
+    else if(!isEmail(newUser.email)){
+        errors.email = 'Must be a valid email address';
+    }
+
+    if(isEmpty(newUser.password)){
+        errors.password = 'Must not be empty';
+    }
+    else if(newUser.password !== newUser.confirmPassword){
+        errors.password = 'Passwords must match';
+    }
+
+    if(isEmpty(newUser.handle)){
+        errors.handle = 'Must not be empty';
+    }
+    
+    // Checks the error object and sees if the length of its keys are > 0, if yes that means
+    // we have an error somewhere
+    if(Object.keys(errors).length > 0){
+        return res.status(400).json(errors);
+    }
+
 
     // Check if user handle exists or not, you will get a doc regardless if it exists or not
     let token, userId;
@@ -115,6 +156,8 @@ app.post('/signup', (req, res) => {
             }
         });
 })
+
+
 
 // To expose our endpoint to be something like https://baseurl/api/function
 // app is the container for all our routes so we just expose that, this is done through express
